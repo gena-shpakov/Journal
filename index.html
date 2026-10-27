@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Аналіз ЗЗСО - Систематизація даних</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Підключення стилів -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-24 md:pb-12">
+
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white text-indigo-700 p-2 rounded-lg font-bold text-xl shadow">
+          <i class="fa-solid fa-school"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg md:text-xl leading-tight">Аналіз ЗЗСО</h1>
+          <p class="text-xs text-indigo-200 hidden sm:block">Форма оцінювання закладу загальної середньої освіти</p>
+        </div>
+      </div>
+      
+      <!-- View Toggle Buttons -->
+      <div class="flex bg-indigo-800 p-1 rounded-xl">
+        <button id="btn-form-view" onclick="switchView('form')" class="px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-2 bg-white text-indigo-900 shadow">
+          <i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Форма</span>
+        </button>
+        <button id="btn-table-view" onclick="switchView('table')" class="px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-2 text-indigo-100 hover:text-white">
+          <i class="fa-solid fa-table"></i> <span class="hidden sm:inline">База даних</span>
+          <span id="record-count-badge" class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs (Only visible in Form View) -->
+  <nav id="section-nav" class="bg-white border-b border-slate-200 sticky top-[57px] z-20 shadow-sm overflow-x-auto">
+    <div class="max-w-7xl mx-auto px-4 flex space-x-1 sm:space-x-2 py-2 min-w-max text-xs md:text-sm">
+      <button onclick="scrollToSection('sec1')" class="px-3 py-1.5 rounded-md font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 flex items-center gap-1.5 whitespace-nowrap">
+        <span>1.</span> Загальна інформація
+      </button>
+      <button onclick="scrollToSection('sec2')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+        <span>2.</span> МТБ
+      </button>
+      <button onclick="scrollToSection('sec3')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+        <span>3.</span> Навчальна діяльність
+      </button>
+      <button onclick="scrollToSection('sec4')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+        <span>4.</span> Управління
+      </button>
+      <button onclick="scrollToSection('sec5')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+        <span>5.</span> Виховна діяльність
+      </button>
+      <button onclick="scrollToSection('sec6')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+        <span>6.</span> Підтримка
+      </button>
+      <button onclick="scrollToSection('sec7')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+        <span>7.</span> Зворотний зв'язок
+      </button>
+      <button onclick="scrollToSection('sec8')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+        <span>8.</span> Висновки
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+    <!-- FORM VIEW -->
+    <div id="form-view-container" class="space-y-6">
+      
+      <!-- Top Action Bar -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Заповнення теми аналізу</h2>
+          <p class="text-xs text-slate-500">Всі поля зберігаються локально в чернетці</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <button type="button" onclick="resetForm()" class="px-3 py-2 text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg border border-slate-200 transition">
+            <i class="fa-solid fa-rotate-left"></i> Очистити
+          </button>
+          <button type="button" onclick="saveCurrentRecord()" class="flex-1 sm:flex-none px-4 py-2 text-xs md:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> Зберегти в базу
+          </button>
+        </div>
+      </div>
+
+      <form id="school-analysis-form" class="space-y-6">
+        <input type="hidden" id="editing-record-id" value="">
+
+        <!-- SECTION 1 -->
+        <section id="sec1" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">1</span>
+            Загальна інформація про заклад
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Назва закладу *</label>
+              <input type="text" id="schoolName" required class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="напр., Ліцей №15 м. Києва">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Тип закладу</label>
+              <select id="schoolType" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="Гімназія">Гімназія</option>
+                <option value="Ліцей">Ліцей</option>
+                <option value="Спеціалізована школа">Спеціалізована школа</option>
+                <option value="Загальноосвітня школа">Загальноосвітня школа</option>
+                <option value="НВК / ЗЗСО">НВК / ЗЗСО</option>
+                <option value="Інше">Інше</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Рік заснування</label>
+              <input type="number" id="foundingYear" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="1995">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Адреса</label>
+              <input type="text" id="address" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="вул. Шевченка, 10, м. Київ">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Кількість учнів</label>
+              <input type="number" id="studentCount" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="450">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Кількість класів</label>
+              <input type="number" id="classCount" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="18">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Форма навчання</label>
+              <select id="studyForm" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="Очна (денна)">Очна (денна)</option>
+                <option value="Змішана">Змішана</option>
+                <option value="Дистанційна">Дистанційна</option>
+                <option value="Вечірня">Вечірня</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Спеціалізація закладу</label>
+              <input type="text" id="specialization" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Природничо-математична, гуманітарна...">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Контакти (телефон, email, сайт)</label>
+              <input type="text" id="contacts" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="+380... / info@school.edu.ua / school.edu.ua">
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 2 -->
+        <section id="sec2" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">2</span>
+            Матеріально-технічна база
+          </h3>
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Кількість навчальних кабінетів</label>
+                <input type="number" id="roomCount" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="24">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Наявність укриття</label>
+                <select id="hasShelter" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                  <option value="Так (власне)">Так (власне укриття)</option>
+                  <option value="Так (найпростіше)">Так (найпростіше)</option>
+                  <option value="За договором поруч">За договором поруч</option>
+                  <option value="Ні">Ні</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- IT Equipment Sub-block -->
+            <div class="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 space-y-3">
+              <h4 class="font-semibold text-xs text-slate-600 uppercase tracking-wider">Оснащення кабінетів та ІКТ</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Інтерактивні дошки (шт)</label>
+                  <input type="number" id="interactiveBoards" class="w-full rounded-lg border-slate-300 border p-2 text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Комп'ютери/Ноутбуки (шт)</label>
+                  <input type="number" id="computersCount" class="w-full rounded-lg border-slate-300 border p-2 text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Мультимедійні засоби</label>
+                  <input type="text" id="multimedia" class="w-full rounded-lg border-slate-300 border p-2 text-sm" placeholder="Проектори, панелі...">
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Електронний журнал</label>
+                  <select id="hasEJournal" class="w-full rounded-lg border-slate-300 border p-2 text-sm bg-white">
+                    <option value="Так (Нові Знання / Єдина Школа)">Так</option>
+                    <option value="Ні">Ні</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Наявність Wi-Fi</label>
+                  <select id="hasWifi" class="w-full rounded-lg border-slate-300 border p-2 text-sm bg-white">
+                    <option value="Так (по всій школі)">Так (по всій школі)</option>
+                    <option value="Частково">Частково</option>
+                    <option value="Ні">Ні</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Доступ до інтернет-ресурсів</label>
+                  <input type="text" id="internetAccess" class="w-full rounded-lg border-slate-300 border p-2 text-sm" placeholder="Швидкість, обмеження">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sports & Library -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 space-y-2">
+                <h4 class="font-semibold text-xs text-slate-600 uppercase tracking-wider">Спортивна інфраструктура</h4>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-slate-600">Спортивні зали (шт)</label>
+                    <input type="number" id="sportsHalls" class="w-full rounded border-slate-300 border p-1.5 text-sm">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-slate-600">Стадіон / Майданчик</label>
+                    <select id="hasStadium" class="w-full rounded border-slate-300 border p-1.5 text-sm bg-white">
+                      <option value="Так">Так</option>
+                      <option value="Потребує ремонту">Потребує ремонту</option>
+                      <option value="Ні">Ні</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600">Басейн</label>
+                  <select id="hasPool" class="w-full rounded border-slate-300 border p-1.5 text-sm bg-white">
+                    <option value="Ні">Ні</option>
+                    <option value="Так (функціонує)">Так (функціонує)</option>
+                    <option value="Так (потребує ремонту)">Так (потребує ремонту)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 space-y-2">
+                <h4 class="font-semibold text-xs text-slate-600 uppercase tracking-wider">Бібліотека</h4>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-slate-600">Кількість книг (тис.)</label>
+                    <input type="number" id="bookCount" class="w-full rounded border-slate-300 border p-1.5 text-sm" placeholder="15">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-slate-600">Е-бібліотека</label>
+                    <select id="hasELibrary" class="w-full rounded border-slate-300 border p-1.5 text-sm bg-white">
+                      <option value="Так">Так</option>
+                      <option value="Ні">Ні</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600">Доступ до е-ресурсів</label>
+                  <input type="text" id="eResourceAccess" class="w-full rounded border-slate-300 border p-1.5 text-sm" placeholder="Опишіть доступ...">
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Інші ресурси (лабораторії, майстерні, медкабінет тощо)</label>
+              <textarea id="otherResources" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Опишіть інші наявні ресурси..."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 3 -->
+        <section id="sec3" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">3</span>
+            Навчально-методична діяльність
+          </h3>
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Освітня програма</label>
+                <input type="text" id="educationProgram" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="НУШ, Інтелект України, Світ чекає крилатих...">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Авторські програми / Інноваційні підходи</label>
+                <input type="text" id="authorPrograms" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Наявність спецкурсів...">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Проблема, над якою працює ЗЗСО</label>
+              <input type="text" id="schoolProblem" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Методична тема закладу...">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Нормативна документація, що регламентує роботу</label>
+              <input type="text" id="normativeDocs" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Статут, освітня програма, річний план...">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Методи навчання та педагогічні технології</label>
+                <textarea id="teachingMethods" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Проєктне навчання, проблемне, диференційоване..."></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Ступінь впровадження ІКТ</label>
+                <textarea id="ictIntegration" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Використання LMS Google Classroom, Classtime..."></textarea>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Робота з обдарованими учнями</label>
+                <input type="text" id="giftedStudentsWork" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Олімпіади, МАН, конкурси...">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Методи оцінювання</label>
+                <input type="text" id="assessmentMethods" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Тести, проєкти, портфоліо...">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Гуртки та секції</label>
+                <input type="text" id="clubsAndSections" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Спортивні, художні, робототехніка...">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 4 -->
+        <section id="sec4" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">4</span>
+            Організаційна структура та управління
+          </h3>
+          <div class="space-y-4">
+            <div class="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 space-y-3">
+              <h4 class="font-semibold text-xs text-slate-600 uppercase tracking-wider">Керівництво</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">ПІБ Директора</label>
+                  <input type="text" id="directorName" class="w-full rounded border-slate-300 border p-2 text-sm" placeholder="ПІБ...">
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Освіта директора</label>
+                  <input type="text" id="directorEducation" class="w-full rounded border-slate-300 border p-2 text-sm" placeholder="Вища педагогічна...">
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Педагогічний стаж (років)</label>
+                  <input type="number" id="directorExperience" class="w-full rounded border-slate-300 border p-2 text-sm" placeholder="20">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">Заступники директора (ПІБ, напрямки)</label>
+                <input type="text" id="deputyDirectors" class="w-full rounded border-slate-300 border p-2 text-sm" placeholder="ЗНВР, ЗВР, ЗГО...">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Методичні об'єднання / Кафедри</label>
+                <textarea id="methodicalUnits" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Перелік МО..."></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Система управління</label>
+                <select id="managementSystem" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                  <option value="Колегіальна">Колегіальна</option>
+                  <option value="Централізована">Централізована</option>
+                  <option value="Демократична / Децентралізована">Демократична / Децентралізована</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Рада школи / Батьківський комітет</label>
+                <textarea id="schoolCouncil" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Склад, активність, взаємодія..."></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 5 -->
+        <section id="sec5" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">5</span>
+            Виховна діяльність
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Загальний підхід до виховання</label>
+              <textarea id="upbringingApproach" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Національно-патріотичне, морально-етичне..."></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Громадська діяльність / Волонтерство</label>
+              <textarea id="civicActivities" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Благодійні акції, волонтерські ініціативи..."></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Учнівське самоврядування</label>
+              <input type="text" id="studentInitiatives" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Назва органу самоврядування, проекти...">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Заходи безпеки та антибулінг</label>
+              <input type="text" id="safetyMeasures" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Програми, тренінги з кібербезпеки...">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Положення про академічну доброчесність</label>
+              <select id="academicIntegrity" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="Наявне та впроваджене">Наявне та впроваджене</option>
+                <option value="Наявне (потребує оновлення)">Наявне (потребує оновлення)</option>
+                <option value="У розробці">У розробці</option>
+                <option value="Відсутнє">Відсутнє</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 6 -->
+        <section id="sec6" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">6</span>
+            Психолого-педагогічна підтримка
+          </h3>
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Шкільний психолог</label>
+                <input type="text" id="schoolPsychologist" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Кількість ставок, напрямки роботи...">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Соціальний педагог</label>
+                <input type="text" id="socialPedagogue" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Кількість ставок, робота з сім'ями...">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Система підтримки учнів</label>
+              <input type="text" id="studentSupportSystem" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Консультації, адатаційні тренінги...">
+            </div>
+
+            <!-- Inclusive Education Sub-block -->
+            <div class="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 space-y-3">
+              <h4 class="font-semibold text-xs text-slate-600 uppercase tracking-wider">Інклюзивне та індивідуальне навчання</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Інклюзивні класи</label>
+                  <select id="hasInclusiveClasses" class="w-full rounded border-slate-300 border p-2 text-sm bg-white">
+                    <option value="Так">Так</option>
+                    <option value="Ні">Ні</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Асистенти вчителів</label>
+                  <input type="text" id="inclusiveAssistants" class="w-full rounded border-slate-300 border p-2 text-sm" placeholder="Наявність, кількість...">
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Домашня форма</label>
+                  <select id="homeEducation" class="w-full rounded border-slate-300 border p-2 text-sm bg-white">
+                    <option value="Є учні">Є учні</option>
+                    <option value="Немає">Немає</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-600 mb-1">Педагогічний патронаж</label>
+                  <select id="pedagogicalPatronage" class="w-full rounded border-slate-300 border p-2 text-sm bg-white">
+                    <option value="Так">Так</option>
+                    <option value="Ні">Ні</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 7 -->
+        <section id="sec7" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">7</span>
+            Зворотний зв'язок та оцінка
+          </h3>
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Анкети та опитування для учнів/батьків</label>
+                <select id="surveysConducted" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                  <option value="Проводяться регулярно (Google Forms)">Проводяться регулярно</option>
+                  <option value="Проводяться ситуативно">Проводяться ситуативно</option>
+                  <option value="Не проводяться">Не проводяться</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Взаємодія з громадою</label>
+                <input type="text" id="communityInteraction" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Спільні проєкти, співпраця з ЗВО...">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Перспективи розвитку та стратегічні плани</label>
+              <textarea id="developmentProspects" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Плани модернізації, цифровізація, нові напрями..."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 8 -->
+        <section id="sec8" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="text-base sm:text-lg font-bold text-indigo-900 border-b pb-2 mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">8</span>
+            Висновки та рекомендації
+          </h3>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Загальний висновок за результатами аналізу</label>
+            <textarea id="finalConclusions" rows="4" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Сильні сторони закладу, проблеми, рекомендації щодо покращення..."></textarea>
+          </div>
+        </section>
+
+        <!-- Bottom Actions -->
+        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+          <button type="button" onclick="saveCurrentRecord()" class="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Зберегти запис у таблицю
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div id="table-view-container" class="hidden space-y-4">
+      
+      <!-- Table Header Actions -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+        <div class="flex-1">
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" id="table-search" oninput="renderTable()" placeholder="Пошук за назвою, типом чи адресою..." class="w-full pl-9 pr-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="exportToCSV()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow transition flex items-center gap-1.5">
+            <i class="fa-solid fa-file-excel"></i> Експорт Excel (CSV)
+          </button>
+          <button onclick="exportAllJSON()" class="px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-medium rounded-lg shadow transition flex items-center gap-1.5">
+            <i class="fa-solid fa-download"></i> Бэкап (JSON)
+          </button>
+          <label class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 cursor-pointer transition flex items-center gap-1.5">
+            <i class="fa-solid fa-upload"></i> Імпорт JSON
+            <input type="file" id="import-json-file" accept=".json" class="hidden" onchange="importJSON(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Desktop Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hidden md:block">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 text-slate-700 text-xs uppercase font-semibold border-b">
+              <tr>
+                <th class="p-3">Дата</th>
+                <th class="p-3">Назва закладу</th>
+                <th class="p-3">Тип</th>
+                <th class="p-3">Учнів</th>
+                <th class="p-3">Класів</th>
+                <th class="p-3">Форма</th>
+                <th class="p-3 text-right">Дії</th>
+              </tr>
+            </thead>
+            <tbody id="analysis-table-body" class="divide-y divide-slate-100">
+              <!-- JS-populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mobile Cards View -->
+      <div id="analysis-cards-mobile" class="grid grid-cols-1 gap-3 md:hidden">
+        <!-- JS-populated -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden bg-white p-8 rounded-xl border border-dashed border-slate-300 text-center space-y-3">
+        <div class="text-slate-300 text-4xl"><i class="fa-solid fa-folder-open"></i></div>
+        <p class="text-slate-500 font-medium text-sm">Збережених аналізів поки немає</p>
+        <button onclick="switchView('form')" class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg shadow hover:bg-indigo-700">
+          Заповнити першу анкету
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Mobile Bottom Toolbar -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 md:hidden flex justify-around items-center z-40 shadow-lg">
+    <button onclick="switchView('form')" class="flex flex-col items-center gap-1 text-indigo-600">
+      <i class="fa-solid fa-pen-to-square text-lg"></i>
+      <span class="text-[10px] font-medium">Форма</span>
+    </button>
+    <button onclick="saveCurrentRecord()" class="flex flex-col items-center gap-1 text-emerald-600">
+      <i class="fa-solid fa-floppy-disk text-lg"></i>
+      <span class="text-[10px] font-medium">Зберегти</span>
+    </button>
+    <button onclick="switchView('table')" class="flex flex-col items-center gap-1 text-slate-600 relative">
+      <i class="fa-solid fa-table text-lg"></i>
+      <span class="text-[10px] font-medium">База даних</span>
+    </button>
+  </div>
+
+  <!-- View Modal -->
+  <div id="view-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
+      <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
+        <h3 id="modal-title" class="font-bold text-slate-800 text-base">Деталі анкетування</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div id="modal-content" class="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm">
+        <!-- JS populated -->
+      </div>
+      <div class="p-3 bg-slate-50 border-t flex justify-end gap-2">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium text-xs">Закрити</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-4 right-4 bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs md:text-sm transform translate-y-[-100px] opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-message">Повідомлення</span>
+  </div>
+
+  <!-- Підключення скрипта -->
+  <script src="scripts.js"></script>
+</body>
+</html>
