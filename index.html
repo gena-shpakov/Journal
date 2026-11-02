@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Підключення стилів -->
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-24 md:pb-12">
 
@@ -42,28 +43,44 @@
   <!-- Navigation Tabs (Only visible in Form View) -->
   <nav id="section-nav" class="bg-white border-b border-slate-200 sticky top-[57px] z-20 shadow-sm overflow-x-auto">
     <div class="max-w-7xl mx-auto px-4 flex space-x-1 sm:space-x-2 py-2 min-w-max text-xs md:text-sm">
-      <button onclick="scrollToSection('sec1')" class="px-3 py-1.5 rounded-md font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec1')" 
+              data-section="sec1"
+              class="px-3 py-1.5 rounded-md font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 flex items-center gap-1.5 whitespace-nowrap">
         <span>1.</span> Загальна інформація
       </button>
-      <button onclick="scrollToSection('sec2')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec2')"
+              data-section="sec2"
+              class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
         <span>2.</span> МТБ
       </button>
-      <button onclick="scrollToSection('sec3')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec3')"
+              data-section="sec3"
+              class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
         <span>3.</span> Навчальна діяльність
       </button>
-      <button onclick="scrollToSection('sec4')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec4')"
+              data-section="sec4"
+              class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
         <span>4.</span> Управління
       </button>
-      <button onclick="scrollToSection('sec5')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec5')" 
+              data-section="sec5"
+              class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
         <span>5.</span> Виховна діяльність
       </button>
-      <button onclick="scrollToSection('sec6')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec6')" 
+              data-section="sec6"
+              class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
         <span>6.</span> Підтримка
       </button>
-      <button onclick="scrollToSection('sec7')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec7')" 
+              data-section="sec7"
+              class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
         <span>7.</span> Зворотний зв'язок
       </button>
-      <button onclick="scrollToSection('sec8')" class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+      <button onclick="scrollToSection('sec8')" 
+              data-section="sec8"
+              class="px-3 py-1.5 rounded-md font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 whitespace-nowrap">
         <span>8.</span> Висновки
       </button>
     </div>
@@ -75,21 +92,66 @@
     <!-- FORM VIEW -->
     <div id="form-view-container" class="space-y-6">
       
-      <!-- Top Action Bar -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+      
+<!-- Top Action Bar -->
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+
+    <div class="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h2 class="text-lg font-bold text-slate-800">Заповнення теми аналізу</h2>
-          <p class="text-xs text-slate-500">Всі поля зберігаються локально в чернетці</p>
+            <h2 class="text-lg font-bold text-slate-800">
+                Заповнення анкети закладу
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+                Інформація автоматично зберігається у чернетці
+            </p>
         </div>
+
         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <button type="button" onclick="resetForm()" class="px-3 py-2 text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg border border-slate-200 transition">
-            <i class="fa-solid fa-rotate-left"></i> Очистити
-          </button>
-          <button type="button" onclick="saveCurrentRecord()" class="flex-1 sm:flex-none px-4 py-2 text-xs md:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-floppy-disk"></i> Зберегти в базу
-          </button>
+            <span id="draft-status"
+                  class="text-xs text-emerald-600 font-medium mr-2">
+                <i class="fa-solid fa-cloud-check"></i>
+                Чернетка активна
+            </span>
+
+            <button type="button"
+                    onclick="resetForm()"
+                    class="px-3 py-2 text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg border border-slate-200">
+                <i class="fa-solid fa-rotate-left"></i>
+                Очистити
+            </button>
+
+            <button type="button"
+                    onclick="saveCurrentRecord()"
+                    class="flex-1 sm:flex-none px-4 py-2 text-xs md:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow transition">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Зберегти в базу
+            </button>
         </div>
-      </div>
+    </div>
+
+    <div class="border-t border-slate-100 pt-4">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-semibold text-slate-600">
+                Прогрес заповнення
+            </span>
+
+            <span id="form-progress-text"
+                  class="text-sm font-bold text-indigo-700">
+                0%
+            </span>
+        </div>
+
+        <div class="progress-track">
+            <div id="form-progress-bar" class="progress-fill"></div>
+        </div>
+
+        <p id="form-progress-details"
+           class="text-[11px] text-slate-400 mt-2">
+            Заповнено 0 із 0 полів
+        </p>
+    </div>
+</div>
+
 
       <form id="school-analysis-form" class="space-y-6">
         <input type="hidden" id="editing-record-id" value="">
@@ -103,11 +165,12 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
               <label class="block text-xs font-semibold text-slate-700 mb-1">Назва закладу *</label>
-              <input type="text" id="schoolName" required class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="напр., Ліцей №15 м. Києва">
+              <input type="text" id="schoolName" required class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="бул. Шевченка, 81">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Тип закладу</label>
               <select id="schoolType" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="" selected> Не обрано </option>
                 <option value="Гімназія">Гімназія</option>
                 <option value="Ліцей">Ліцей</option>
                 <option value="Спеціалізована школа">Спеціалізована школа</option>
@@ -135,6 +198,7 @@
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Форма навчання</label>
               <select id="studyForm" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="" selected> Не обрано </option>
                 <option value="Очна (денна)">Очна (денна)</option>
                 <option value="Змішана">Змішана</option>
                 <option value="Дистанційна">Дистанційна</option>
@@ -147,7 +211,9 @@
             </div>
             <div class="md:col-span-2">
               <label class="block text-xs font-semibold text-slate-700 mb-1">Контакти (телефон, email, сайт)</label>
-              <input type="text" id="contacts" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="+380... / info@school.edu.ua / school.edu.ua">
+              <input type="text" id="text" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Номер телефону">
+              <input type="text" id="email" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Електрона пошта">
+              <input type="text" id="phone" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Сайт навчального закладу">
             </div>
           </div>
         </section>
@@ -167,6 +233,7 @@
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">Наявність укриття</label>
                 <select id="hasShelter" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                  <option value="" selected> Не обрано </option>
                   <option value="Так (власне)">Так (власне укриття)</option>
                   <option value="Так (найпростіше)">Так (найпростіше)</option>
                   <option value="За договором поруч">За договором поруч</option>
@@ -196,6 +263,7 @@
                 <div>
                   <label class="block text-xs text-slate-600 mb-1">Електронний журнал</label>
                   <select id="hasEJournal" class="w-full rounded-lg border-slate-300 border p-2 text-sm bg-white">
+                    <option value="" selected> Не обрано </option>
                     <option value="Так (Нові Знання / Єдина Школа)">Так</option>
                     <option value="Ні">Ні</option>
                   </select>
@@ -203,6 +271,7 @@
                 <div>
                   <label class="block text-xs text-slate-600 mb-1">Наявність Wi-Fi</label>
                   <select id="hasWifi" class="w-full rounded-lg border-slate-300 border p-2 text-sm bg-white">
+                    <option value="" selected> Не обрано </option>
                     <option value="Так (по всій школі)">Так (по всій школі)</option>
                     <option value="Частково">Частково</option>
                     <option value="Ні">Ні</option>
@@ -227,6 +296,7 @@
                   <div>
                     <label class="block text-xs text-slate-600">Стадіон / Майданчик</label>
                     <select id="hasStadium" class="w-full rounded border-slate-300 border p-1.5 text-sm bg-white">
+                      <option value="" selected> Не обрано </option>
                       <option value="Так">Так</option>
                       <option value="Потребує ремонту">Потребує ремонту</option>
                       <option value="Ні">Ні</option>
@@ -236,6 +306,7 @@
                 <div>
                   <label class="block text-xs text-slate-600">Басейн</label>
                   <select id="hasPool" class="w-full rounded border-slate-300 border p-1.5 text-sm bg-white">
+                    <option value="" selected> Не обрано </option>
                     <option value="Ні">Ні</option>
                     <option value="Так (функціонує)">Так (функціонує)</option>
                     <option value="Так (потребує ремонту)">Так (потребує ремонту)</option>
@@ -253,6 +324,7 @@
                   <div>
                     <label class="block text-xs text-slate-600">Е-бібліотека</label>
                     <select id="hasELibrary" class="w-full rounded border-slate-300 border p-1.5 text-sm bg-white">
+                      <option value="" selected> Не обрано </option>
                       <option value="Так">Так</option>
                       <option value="Ні">Ні</option>
                     </select>
@@ -365,6 +437,7 @@
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">Система управління</label>
                 <select id="managementSystem" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                  <option value="" selected> Не обрано </option>
                   <option value="Колегіальна">Колегіальна</option>
                   <option value="Централізована">Централізована</option>
                   <option value="Демократична / Децентралізована">Демократична / Децентралізована</option>
@@ -404,6 +477,7 @@
             <div class="md:col-span-2">
               <label class="block text-xs font-semibold text-slate-700 mb-1">Положення про академічну доброчесність</label>
               <select id="academicIntegrity" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="" selected> Не обрано </option>
                 <option value="Наявне та впроваджене">Наявне та впроваджене</option>
                 <option value="Наявне (потребує оновлення)">Наявне (потребує оновлення)</option>
                 <option value="У розробці">У розробці</option>
@@ -443,6 +517,7 @@
                 <div>
                   <label class="block text-xs text-slate-600 mb-1">Інклюзивні класи</label>
                   <select id="hasInclusiveClasses" class="w-full rounded border-slate-300 border p-2 text-sm bg-white">
+                    <option value="" selected> Не обрано </option>
                     <option value="Так">Так</option>
                     <option value="Ні">Ні</option>
                   </select>
@@ -454,6 +529,7 @@
                 <div>
                   <label class="block text-xs text-slate-600 mb-1">Домашня форма</label>
                   <select id="homeEducation" class="w-full rounded border-slate-300 border p-2 text-sm bg-white">
+                    <option value="" selected> Не обрано </option>
                     <option value="Є учні">Є учні</option>
                     <option value="Немає">Немає</option>
                   </select>
@@ -461,6 +537,7 @@
                 <div>
                   <label class="block text-xs text-slate-600 mb-1">Педагогічний патронаж</label>
                   <select id="pedagogicalPatronage" class="w-full rounded border-slate-300 border p-2 text-sm bg-white">
+                    <option value="" selected> Не обрано </option>
                     <option value="Так">Так</option>
                     <option value="Ні">Ні</option>
                   </select>
@@ -481,6 +558,7 @@
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">Анкети та опитування для учнів/батьків</label>
                 <select id="surveysConducted" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                  <option value="" selected> Не обрано </option>
                   <option value="Проводяться регулярно (Google Forms)">Проводяться регулярно</option>
                   <option value="Проводяться ситуативно">Проводяться ситуативно</option>
                   <option value="Не проводяться">Не проводяться</option>

@@ -1,41 +1,440 @@
-/* Custom Scrollbars */
+
+/* =====================================
+   ЗЗСО — Modern UI
+   ===================================== */
+
+:root {
+    --primary: #29477a;
+    --primary-dark: #1e365f;
+    --primary-light: #edf3ff;
+    --accent: #4779c7;
+    --success: #15966a;
+    --danger: #dc5353;
+    --page-bg: #f4f6fa;
+    --surface: #ffffff;
+    --border: #e3e8f0;
+    --text: #263449;
+    --muted: #78869a;
+    --radius: 14px;
+    --shadow: 0 3px 14px rgba(30, 54, 95, 0.045);
+}
+
+/* Загальні налаштування */
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 135px;
+}
+
+body {
+    background: var(--page-bg) !important;
+    color: var(--text);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    letter-spacing: -0.01em;
+}
+
+::selection {
+    background: #dbeafe;
+    color: var(--primary-dark);
+}
+
+/* Скролбари */
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+    width: 7px;
+    height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+    background: #edf0f5;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+    background: #c4cedd;
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+    background: #96a6bd;
 }
 
-/* Smooth Scrolling for form sections */
-html {
-  scroll-behavior: smooth;
+/* Верхня панель */
+
+header {
+    background: linear-gradient(
+        110deg,
+        #1e365f,
+        #29477a 65%,
+        #365b91
+    ) !important;
+    box-shadow: 0 3px 16px rgba(30, 54, 95, 0.16) !important;
 }
 
-/* Print Stylesheet optimization */
+header > div {
+    min-height: 68px;
+}
+
+header h1 {
+    letter-spacing: -0.035em;
+}
+
+header .bg-indigo-800 {
+    background: rgba(15, 35, 67, 0.38) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Навігація */
+
+#section-nav {
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: 0 3px 12px rgba(30, 54, 95, 0.04) !important;
+}
+
+#section-nav > div {
+    gap: 5px;
+    padding-top: 11px;
+    padding-bottom: 11px;
+}
+
+#section-nav button {
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 9px 12px;
+    transition: all 0.2s ease;
+    color: #65748a;
+}
+
+#section-nav button:hover {
+    background: #f1f5fb;
+    color: var(--primary);
+}
+
+#section-nav button.text-indigo-600 {
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+    border-color: #d4e2fa !important;
+    font-weight: 700;
+}
+
+/* Основна область */
+
+main {
+    padding-top: 28px !important;
+    padding-bottom: 45px !important;
+}
+
+#form-view-container,
+#table-view-container {
+    gap: 20px;
+}
+
+/* Картки та розділи */
+
+#school-analysis-form > section,
+#form-view-container > div:first-child,
+#table-view-container > div {
+    background: var(--surface);
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+#school-analysis-form > section {
+    padding: 25px !important;
+    margin-bottom: 20px;
+    scroll-margin-top: 140px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+#school-analysis-form > section:hover {
+    border-color: #d5deeb !important;
+    box-shadow: 0 5px 20px rgba(30, 54, 95, 0.06) !important;
+}
+
+/* Заголовки розділів */
+
+#school-analysis-form section h3 {
+    color: var(--primary-dark) !important;
+    border-color: var(--border) !important;
+    padding-bottom: 15px;
+    margin-bottom: 22px;
+    letter-spacing: -0.025em;
+}
+
+#school-analysis-form section h3 > span {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+    font-weight: 700;
+}
+
+/* Внутрішні картки */
+
+#school-analysis-form section .bg-slate-50 {
+    background: #f7f9fc !important;
+    border: 1px solid #e8edf4 !important;
+    border-radius: 11px !important;
+    padding: 17px !important;
+}
+
+#school-analysis-form section h4 {
+    color: #53647b !important;
+    letter-spacing: 0.055em;
+    font-size: 11px;
+}
+
+/* Поля введення */
+
+#school-analysis-form input:not([type="hidden"]),
+#school-analysis-form select,
+#school-analysis-form textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    background-color: #fff;
+    border: 1px solid #dce3ed !important;
+    border-radius: 9px !important;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#school-analysis-form textarea {
+    min-height: 80px;
+    resize: vertical;
+    line-height: 1.55;
+}
+
+#school-analysis-form input::placeholder,
+#school-analysis-form textarea::placeholder {
+    color: #a2adbd;
+}
+
+#school-analysis-form input:focus,
+#school-analysis-form select:focus,
+#school-analysis-form textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(71, 121, 199, 0.12);
+}
+
+#school-analysis-form label {
+    color: #536176 !important;
+    font-size: 12px;
+    font-weight: 650;
+    margin-bottom: 7px;
+}
+
+/* Верхня панель дій */
+
+#form-view-container > div:first-child {
+    padding: 20px !important;
+}
+
+#form-view-container > div:first-child h2 {
+    color: var(--primary-dark);
+    font-size: 18px;
+    letter-spacing: -0.03em;
+}
+
+#form-view-container > div:first-child p {
+    margin-top: 5px;
+    color: var(--muted);
+}
+
+/* Кнопки */
+
+button {
+    transition:
+        background-color 0.18s ease,
+        color 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+#form-view-container button,
+#table-view-container button {
+    border-radius: 9px;
+}
+
+#school-analysis-form button[type="button"] {
+    font-weight: 650;
+}
+
+/* Таблиця */
+
+#table-view-container table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#table-view-container thead {
+    background: #f5f7fb !important;
+}
+
+#table-view-container th {
+    padding: 15px 13px;
+    color: #5b6a80;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+}
+
+#table-view-container td {
+    padding: 14px 13px;
+    vertical-align: middle;
+}
+
+#table-view-container tbody tr {
+    transition: background 0.15s ease;
+}
+
+#table-view-container tbody tr:hover {
+    background: #f6f9fe !important;
+}
+
+/* Мобільні картки */
+
+#analysis-cards-mobile > div {
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s ease;
+}
+
+#analysis-cards-mobile > div:active {
+    box-shadow: 0 2px 8px rgba(30, 54, 95, 0.08);
+}
+
+/* Модальне вікно */
+
+#view-modal > div {
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+}
+
+#modal-content > div {
+    padding: 11px 0;
+}
+
+/* Повідомлення */
+
+#toast {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.2);
+}
+
+/* Прогрес заповнення */
+
+.progress-track {
+    height: 8px;
+    overflow: hidden;
+    background: #e9eef6;
+    border-radius: 20px;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4779c7, #6c9ce3);
+    border-radius: inherit;
+    transition: width 0.3s ease;
+}
+
+/* Індикатори навігації */
+
+#section-nav button::after {
+    content: attr(data-progress);
+    font-size: 9px;
+    font-weight: 700;
+    color: #8290a4;
+    margin-left: 3px;
+}
+
+#section-nav button[data-progress="100%"]::after {
+    color: #15966a;
+}
+
+/* Нижня мобільна панель */
+
+@media (max-width: 767px) {
+    main {
+        padding-top: 16px !important;
+    }
+
+    #school-analysis-form > section {
+        padding: 17px !important;
+        scroll-margin-top: 125px;
+    }
+
+    #section-nav {
+        top: 64px !important;
+    }
+
+    #section-nav button {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    header > div {
+        min-height: 64px;
+    }
+
+    body {
+        padding-bottom: 85px !important;
+    }
+
+    .fixed.bottom-0 {
+        padding-top: 10px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        background: rgba(255, 255, 255, 0.97) !important;
+        backdrop-filter: blur(12px);
+    }
+}
+
+/* Зменшення анімацій для користувачів,
+   які вимкнули рух в налаштуваннях системи */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* Друк */
+
 @media print {
-  header, nav, .fixed, button, #section-nav, .no-print {
-    display: none !important;
-  }
-  
-  body {
-    background: white !important;
-    padding: 0 !important;
-  }
+    header,
+    nav,
+    .fixed,
+    button,
+    #section-nav,
+    .no-print {
+        display: none !important;
+    }
 
-  section {
-    box-shadow: none !important;
-    border: 1px solid #e2e8f0 !important;
-    break-inside: avoid;
-  }
+    body {
+        background: white !important;
+        padding: 0 !important;
+    }
+
+    #school-analysis-form > section {
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0 !important;
+        break-inside: avoid;
+    }
 }

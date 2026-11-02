@@ -5,7 +5,7 @@ const STORAGE_KEY_DRAFT = 'zzso_analysis_draft_v1';
 
 // Form Fields Mapping
 const formFields = [
-  'schoolName', 'schoolType', 'foundingYear', 'address', 'studentCount', 'classCount', 'studyForm', 'specialization', 'contacts',
+  'schoolName', 'schoolType', 'foundingYear', 'address', 'studentCount', 'classCount', 'studyForm', 'specialization', 'text','email','phone',
   'roomCount', 'hasShelter', 'interactiveBoards', 'computersCount', 'multimedia', 'hasEJournal', 'hasWifi', 'internetAccess',
   'sportsHalls', 'hasStadium', 'hasPool', 'bookCount', 'hasELibrary', 'eResourceAccess', 'otherResources',
   'educationProgram', 'authorPrograms', 'schoolProblem', 'normativeDocs', 'teachingMethods', 'ictIntegration', 'giftedStudentsWork', 'assessmentMethods', 'clubsAndSections',
@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDraft();
   updateRecordCountBadge();
   setupAutoDraftSave();
+  setupSectionNavigation();
+
+  setActiveSection('sec1');
+  updateFormProgress();
 });
 
 // View Switcher (Form / Table)
@@ -50,14 +54,72 @@ function switchView(view) {
   }
 }
 
+// Встановлення активної кнопки навігації
+function setActiveSection(id) {
+    document.querySelectorAll('#section-nav button[data-section]')
+        .forEach(button => {
+            const active = button.dataset.section === id;
+
+            button.classList.toggle('text-indigo-600', active);
+            button.classList.toggle('bg-indigo-50', active);
+            button.classList.toggle('border', active);
+            button.classList.toggle('border-indigo-200', active);
+
+            button.classList.toggle('text-slate-600', !active);
+            button.classList.toggle('hover:bg-slate-100', !active);
+        });
+}
+
 // Scroll to section
 function scrollToSection(id) {
-  const el = document.getElementById(id);
-  if (el) {
-    const yOffset = -110; 
-    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-  }
+    const section = document.getElementById(id);
+    if (!section) return;
+
+    setActiveSection(id);
+
+    const offset = window.innerWidth <= 767 ? 125 : 140;
+    const position = section.getBoundingClientRect().top
+        + window.scrollY - offset;
+
+    window.scrollTo({
+        top: position,
+        behavior: 'smooth'
+    });
+}
+
+// Автоматичне перемикання активної секції
+function setupSectionNavigation() {
+    const sections = Array.from(
+        document.querySelectorAll('#school-analysis-form section[id]')
+    );
+
+    if (!sections.length) return;
+
+    function updateActiveSection() {
+        let current = sections[0];
+        const offset = window.innerWidth <= 767 ? 140 : 155;
+
+        sections.forEach(section => {
+            if (section.getBoundingClientRect().top <= offset) {
+                current = section;
+            }
+        });
+
+        if (window.innerHeight + window.scrollY >=
+            document.documentElement.scrollHeight - 5) {
+            current = sections[sections.length - 1];
+        }
+
+        setActiveSection(current.id);
+    }
+
+    window.addEventListener('scroll', updateActiveSection, {
+        passive: true
+    });
+
+    window.addEventListener('resize', updateActiveSection);
+
+    updateActiveSection();
 }
 
 // Auto Save Draft
@@ -69,15 +131,86 @@ function setupAutoDraftSave() {
       el.addEventListener('change', saveDraft);
     }
   });
+
+  updateFormProgress();
 }
 
+
+function updateFormProgress() {
+    const fields = formFields
+        .map(id => document.getElementById(id))
+        .filter(el => el && el.type !== 'hidden');
+
+    const total = fields.length;
+
+    const completed = fields.filter(el => {
+        return el.value.trim() !== '';
+    }).length;
+
+    const percentage = total
+        ? Math.round((completed / total) * 100)
+        : 0;
+
+    const progressText = document.getElementById('form-progress-text');
+    const progressBar = document.getElementById('form-progress-bar');
+    const progressDetails = document.getElementById('form-progress-details');
+
+    if (progressText) {
+        progressText.textContent = `${percentage}%`;
+    }
+
+    if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+    }
+
+    if (progressDetails) {
+        progressDetails.textContent =
+            `Заповнено ${completed} із ${total} полів`;
+    }
+
+    // Оновлення прогресу окремих розділів
+    document.querySelectorAll(
+        '#school-analysis-form section[id]'
+    ).forEach(section => {
+        const sectionFields = Array.from(
+            section.querySelectorAll('input, select, textarea')
+        ).filter(el => el.type !== 'hidden');
+
+        const sectionCompleted = sectionFields.filter(
+            el => el.value.trim() !== ''
+        ).length;
+
+        const sectionTotal = sectionFields.length;
+
+        const sectionProgress = sectionTotal
+            ? Math.round((sectionCompleted / sectionTotal) * 100)
+            : 0;
+
+        const navButton = document.querySelector(
+            `#section-nav button[data-section="${section.id}"]`
+        );
+
+        if (navButton) {
+            navButton.dataset.progress = `${sectionProgress}%`;
+        }
+    });
+}
+
+
 function saveDraft() {
-  const formData = {};
-  formFields.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) formData[id] = el.value;
-  });
-  localStorage.setItem(STORAGE_KEY_DRAFT, JSON.stringify(formData));
+    const formData = {};
+
+    formFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) formData[id] = el.value;
+    });
+
+    localStorage.setItem(
+        STORAGE_KEY_DRAFT,
+        JSON.stringify(formData)
+    );
+
+    updateFormProgress();
 }
 
 function loadDraft() {
@@ -93,6 +226,7 @@ function loadDraft() {
       console.error("Error loading draft", e);
     }
   }
+  updateFormProgress();
 }
 
 // Save Full Record to Table
@@ -219,6 +353,7 @@ function renderTable() {
 // Reset form
 function resetForm() {
   document.getElementById('school-analysis-form').reset();
+  updateFormProgress();
   document.getElementById('editing-record-id').value = '';
   localStorage.removeItem(STORAGE_KEY_DRAFT);
   showToast('Форму очищено');
@@ -356,3 +491,48 @@ function showToast(msg) {
     toast.classList.add('translate-y-[-100px]', 'opacity-0');
   }, 3000);
 }
+
+// 1. Підключаємося до Supabase
+const SUPABASE_URL = 'https://fbnhlhzpwvogzyjiphm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_iahfPQ8Ps5inAPYRaBZZsg_X7i7az98';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 2. Функція збору даних із вашої форми та надсилання в базу
+async function handleFormSubmit(event) {
+  event.preventDefault(); // Запобігаємо стандартному перезавантаженню сторінки
+
+  // Збираємо дані з полів вашої форми (замініть id="...") на ваші реальні id полів у HTML
+  const surveyData = {
+    school_name: document.getElementById('schoolName')?.value || '',
+    school_type: document.getElementById('schoolType')?.value || '',
+    address: document.getElementById('address')?.value || '',
+    students_count: document.getElementById('studentsCount')?.value || '',
+    // ... сюди можна додати інші поля з вашого шаблону
+  };
+
+  // 3. Надсилаємо весь об'єкт у колонку "answers" (тип jsonb) таблиці "surveys"
+  const { data, error } = await supabase
+    .from('surveys') // назва вашої таблиці в Supabase
+    .insert([
+      { answers: surveyData }
+    ]);
+
+  if (error) {
+    console.error('Помилка збереження:', error.message);
+    alert('Сталася помилка при надсиланні. Спробуйте ще раз.');
+  } else {
+    console.log('Дані успішно збережено!', data);
+    alert('Дякуємо! Вашу форму успішно надіслано.');
+    
+    // Опціонально: очистити форму після відправлення
+    event.target.reset();
+  }
+}
+
+// 4. Прив'язуємо цю функцію до вашої форми за її id (наприклад, id="schoolForm")
+document.addEventListener('DOMContentLoaded', () => {
+  const formElement = document.getElementById('school-analysis-fotm');
+  if (formElement) {
+    formElement.addEventListener('submit', handleFormSubmit);
+  }
+});
