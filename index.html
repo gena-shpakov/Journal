@@ -24,7 +24,137 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-24 md:pb-12">
+<body class="auth-required bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-24 md:pb-12">
+
+
+<!-- AUTHENTICATION -->
+<section id="auth-screen"
+    class="fixed inset-0 z-[100] bg-slate-50 flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md">
+
+        <!-- LOGO -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center
+                w-16 h-16 bg-indigo-600 text-white rounded-2xl
+                shadow-lg shadow-indigo-200 mb-4">
+
+                <i class="fa-solid fa-school text-2xl"></i>
+
+            </div>
+
+            <h1 class="text-2xl font-bold text-slate-800">
+                Аналіз ЗЗСО
+            </h1>
+
+            <p class="text-sm text-slate-500 mt-2">
+                Систематизація даних закладів освіти
+            </p>
+        </div>
+
+        <!-- AUTH CARD -->
+        <div class="bg-white rounded-2xl shadow-xl
+            border border-slate-100 p-6 sm:p-8">
+
+            <div class="mb-6">
+                <h2 id="auth-title"
+                    class="text-xl font-bold text-slate-800">
+                    Вхід до системи
+                </h2>
+
+                <p id="auth-description"
+                    class="text-sm text-slate-500 mt-1">
+                    Увійдіть, щоб продовжити роботу
+                </p>
+            </div>
+
+            <!-- AUTH FORM -->
+            <form id="auth-form" class="space-y-4">
+
+                <div>
+                    <label for="auth-email"
+                        class="block text-sm font-medium mb-1.5">
+                        Електронна пошта
+                    </label>
+
+                    <input
+                        id="auth-email"
+                        type="email"
+                        required
+                        autocomplete="email"
+                        placeholder="example@gmail.com"
+                        class="w-full px-4 py-3 border border-slate-200
+                        rounded-xl outline-none focus:ring-2
+                        focus:ring-indigo-500 focus:border-indigo-500
+                        transition">
+                </div>
+
+                <div>
+                    <label for="auth-password"
+                        class="block text-sm font-medium mb-1.5">
+                        Пароль
+                    </label>
+
+                    <input
+                        id="auth-password"
+                        type="password"
+                        required
+                        minlength="6"
+                        autocomplete="current-password"
+                        placeholder="Мінімум 6 символів"
+                        class="w-full px-4 py-3 border border-slate-200
+                        rounded-xl outline-none focus:ring-2
+                        focus:ring-indigo-500 focus:border-indigo-500
+                        transition">
+                </div>
+
+                <div id="auth-message"
+                    class="hidden text-sm p-3 rounded-lg">
+                </div>
+
+                <button
+                    id="auth-submit"
+                    type="submit"
+                    class="w-full py-3 bg-indigo-600 hover:bg-indigo-700
+                    text-white font-semibold rounded-xl shadow-md
+                    shadow-indigo-100 transition">
+
+                    Увійти
+
+                </button>
+
+            </form>
+
+            <!-- SWITCH MODE -->
+            <div class="mt-6 text-center text-sm text-slate-500">
+
+                <span id="auth-switch-text">
+                    Ще не маєте облікового запису?
+                </span>
+
+                <button
+                    id="auth-switch"
+                    type="button"
+                    class="text-indigo-600 font-semibold
+                    hover:text-indigo-800 ml-1">
+
+                    Зареєструватися
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <p class="text-center text-xs text-slate-400 mt-6">
+            © 2026 Аналіз ЗЗСО
+        </p>
+
+    </div>
+
+</section>
+<!-- END AUTHENTICATION -->
+
 
     <!-- HEADER -->
     <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
@@ -71,6 +201,27 @@
                         class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold"
                     >0</span>
                 </button>
+            </div>
+            <!-- ОБЛІКОВИЙ ЗАПИС -->
+            <div class="flex items-center gap-2">
+            
+                <span
+                    id="current-user-email"
+                    class="hidden lg:block text-xs text-indigo-100 max-w-[180px] truncate">
+                </span>
+            
+                <button
+                    id="logout-button"
+                    type="button"
+                    class="px-3 py-2 text-xs text-white bg-indigo-800
+                    hover:bg-indigo-900 border border-indigo-500
+                    rounded-lg transition whitespace-nowrap">
+            
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>
+                    Вийти
+            
+                </button>
+            
             </div>
         </div>
     </header>

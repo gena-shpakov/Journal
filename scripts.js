@@ -5,9 +5,18 @@
 
 let currentView = 'form';
 
-const STORAGE_KEY_LIST = 'zzso_analysis_records_v1';
-const STORAGE_KEY_DRAFT = 'zzso_analysis_draft_v1';
-const STORAGE_KEY_SYNC = 'zzso_analysis_sync_queue_v1';
+const STORAGE_KEY_LIST_BASE = 'zzso_analysis_records_v1';
+const STORAGE_KEY_DRAFT_BASE = 'zzso_analysis_draft_v1';
+const STORAGE_KEY_SYNC_BASE = 'zzso_analysis_sync_queue_v1';
+
+let STORAGE_KEY_LIST = STORAGE_KEY_LIST_BASE;
+let STORAGE_KEY_DRAFT = STORAGE_KEY_DRAFT_BASE;
+let STORAGE_KEY_SYNC = STORAGE_KEY_SYNC_BASE;
+
+let currentUser = null;
+let initializedUderId = null;
+let authMode = 'login';
+let appEventsInitialized = false;
 
 const SUPABASE_URL = 'https://fbnhlhzpwvogzyjiphm.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_iahfPQ8Ps5inAPYRaBZZsg_X7i7az98';
@@ -62,21 +71,363 @@ const formFields = [
 // 3. INITIALIZATION
 // ==========================================
 
-document.addEventListener('DOMContentLoaded', () => {
+// ==========================================
+// 3. INITIALIZATION
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    setupAuthInterface();
+
+    if (!supabaseClient) {
+        showAuthMessage(
+            'Не вдалося підключитися до Supabase.',
+            'error'
+        );
+        return;
+    }
+
+    // Перевіряємо наявну сесію
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+        console.error('Помилка перевірки сесії:', error);
+        showAuthMessage(error.message, 'error');
+        showAuthScreen();
+        return;
+    }
+
+    if (data.session?.user) {
+        await initializeAuthenticatedApp(data.session.user);
+    } else {
+        showAuthScreen();
+    }
+
+    // Відстежуємо вхід та вихід
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            initializedUserId = null;
+            showAuthScreen();
+        }
+
+        if (event === 'SIGNED_IN' && session?.user) {
+            // Відкладаємо ініціалізацію поза callback Supabase
+            setTimeout(() => {
+                initializeAuthenticatedApp(session.user);
+            }, 0);
+        }
+    });
+});
+
+// ==========================================
+// AUTHENTICATION INTERFACE
+// ==========================================
+
+function showAuthScreen() {
+    document.body.classList.add('auth-required');
+
+    const screen = document.getElementById('auth-screen');
+
+    if (screen) {
+        screen.classList.remove('hidden');
+    }
+}
+
+function hideAuthScreen() {
+    document.body.classList.remove('auth-required');
+
+    const screen = document.getElementById('auth-screen');
+
+    if (screen) {
+        screen.classList.add('hidden');
+    }
+}
+
+function showAuthMessage(message, type = '') {
+    const element = document.getElementById('auth-message');
+
+    if (!element) return;
+
+    element.textContent = message;
+    element.classList.remove('hidden', 'success', 'error');
+
+    if (type) {
+        element.classList.add(type);
+    }
+}
+
+function clearAuthMessage() {
+    const element = document.getElementById('auth-message');
+
+    if (!element) return;
+
+    element.textContent = '';
+    element.classList.add('hidden');
+    element.classList.remove('success', 'error');
+}
+
+function updateAuthMode() {
+    const title = document.getElementById('auth-title');
+    const description = document.getElementById('auth-description');
+    const submit = document.getElementById('auth-submit');
+    const switchText = document.getElementById('auth-switch-text');
+    const switchButton = document.getElementById('auth-switch');
+
+    if (authMode === 'login') {
+        if (title) title.textContent = 'Вхід до системи';
+
+        if (description) {
+            description.textContent =
+                'Увійдіть, щоб працювати зі своїми даними ЗЗСО.';
+        }
+
+        if (submit) submit.textContent = 'Увійти';
+
+        if (switchText) {
+            switchText.textContent = 'Ще не маєте облікового запису?';
+        }
+
+        if (switchButton) {
+            switchButton.textContent = 'Зареєструватися';
+        }
+    } else {
+        if (title) title.textContent = 'Створення облікового запису';
+
+        if (description) {
+            description.textContent =
+                'Зареєструйтеся, щоб зберігати власні дослідження.';
+        }
+
+        if (submit) submit.textContent = 'Зареєструватися';
+
+        if (switchText) {
+            switchText.textContent = 'Вже маєте обліковий запис?';
+        }
+
+        if (switchButton) {
+            switchButton.textContent = 'Увійти';
+        }
+    }
+
+    clearAuthMessage();
+}
+
+function setupAuthInterface() {
+    const form = document.getElementById('auth-form');
+    const switchButton = document.getElementById('auth-switch');
+    const logoutButton = document.getElementById('logout-button');
+
+    if (form) {
+        form.addEventListener('submit', handleAuthSubmit);
+    }
+
+    if (switchButton) {
+        switchButton.addEventListener('click', event => {
+            event.preventDefault();
+
+            authMode = authMode === 'login' ? 'register' : 'login';
+
+            updateAuthMode();
+        });
+    }
+
+    if (logoutButton) {
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await logoutUser();
+
+                currentUser = null;
+                initializedUserId = null;
+
+                showAuthScreen();
+            } catch (error) {
+                console.error('Помилка виходу:', error);
+                showToast('Не вдалося вийти з облікового запису.');
+            }
+        });
+    }
+
+    updateAuthMode();
+}
+
+async function handleAuthSubmit(event) {
+    event.preventDefault();
+
+    const email = document
+        .getElementById('auth-email')
+        ?.value.trim();
+
+    const password = document
+        .getElementById('auth-password')
+        ?.value;
+
+    const submitButton = document.getElementById('auth-submit');
+
+    if (!email || !password) {
+        showAuthMessage(
+            'Заповніть електронну пошту та пароль.',
+            'error'
+        );
+        return;
+    }
+
+    if (password.length < 6) {
+        showAuthMessage(
+            'Пароль повинен містити щонайменше 6 символів.',
+            'error'
+        );
+        return;
+    }
+
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Зачекайте...';
+    }
+
+    try {
+        if (authMode === 'register') {
+            const data = await registerUser(email, password);
+
+            if (data.session?.user) {
+                await initializeAuthenticatedApp(data.session.user);
+            } else {
+                showAuthMessage(
+                    'Реєстрацію виконано! Перевірте електронну пошту та підтвердьте адресу, щоб увійти.',
+                    'success'
+                );
+            }
+        } else {
+            const data = await loginUser(email, password);
+
+            if (data.user) {
+                await initializeAuthenticatedApp(data.user);
+            }
+        }
+    } catch (error) {
+        console.error('Помилка авторизації:', error);
+
+        let message = error.message || 'Невідома помилка.';
+
+        if (message.toLowerCase().includes('invalid login credentials')) {
+            message = 'Неправильна електронна пошта або пароль.';
+        } else if (message.toLowerCase().includes('email not confirmed')) {
+            message = 'Спочатку підтвердьте електронну пошту.';
+        } else if (message.toLowerCase().includes('user already registered')) {
+            message = 'Ця електронна пошта вже зареєстрована.';
+        }
+
+        showAuthMessage(message, 'error');
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 
+                authMode === 'login' ? 'Увійти' : 'Зареєструватися';
+        }
+    }
+}
+
+// ==========================================
+// USER-SPECIFIC STORAGE
+// ==========================================
+
+function setUserStorage(userId) {
+    STORAGE_KEY_LIST = `${STORAGE_KEY_LIST_BASE}_${userId}`;
+    STORAGE_KEY_DRAFT = `${STORAGE_KEY_DRAFT_BASE}_${userId}`;
+    STORAGE_KEY_SYNC = `${STORAGE_KEY_SYNC_BASE}_${userId}`;
+}
+
+// ==========================================
+// AUTHENTICATED APP INITIALIZATION
+// ==========================================
+
+async function initializeAuthenticatedApp(user) {
+    if (!user) return;
+
+    // Захист від повторної ініціалізації
+    if (initializedUserId === user.id) {
+        return;
+    }
+
+    currentUser = user;
+    initializedUserId = user.id;
+
+    // Перемикаємо локальне сховище на користувача
+    setUserStorage(user.id);
+
+    hideAuthScreen();
+
+    // Очищаємо попередній стан форми
+    const form = document.getElementById('school-analysis-form');
+
+    if (form) {
+        form.reset();
+    }
+
+    const editingId = document.getElementById('editing-record-id');
+
+    if (editingId) {
+        editingId.value = '';
+    }
+
+    // Завантажуємо чернетку поточного користувача
     loadDraft();
 
-    updateRecordCountBadge();
-    setupAutoDraftSave();
-    setupSectionNavigation();
+    // Налаштування подій виконується лише один раз
+    if (!appEventsInitialized) {
+        setupAutoDraftSave();
+        setupSectionNavigation();
+
+        appEventsInitialized = true;
+    }
 
     setActiveSection('sec1');
+    updateRecordCountBadge();
     updateFormProgress();
     updateSyncStatus();
 
-    // Спроба синхронізації після запуску
-    syncWithSupabase();
-});
+    // Показуємо електронну пошту користувача,
+    // якщо відповідний елемент є в HTML
+    const emailElement = document.getElementById('current-user-email');
 
+    if (emailElement) {
+        emailElement.textContent = user.email || '';
+    }
+
+    // Завантажуємо записи з хмарної бази
+    try {
+        const remoteRecords = await downloadRecordsFromSupabase();
+        const localRecords = getStoredRecords();
+
+        // Спочатку беремо хмарні записи
+        const merged = new Map();
+
+        remoteRecords.forEach(record => {
+            if (record?.id) {
+                merged.set(record.id, record);
+            }
+        });
+
+        // Локальні записи мають пріоритет:
+        // так не втрачаються ще не синхронізовані зміни
+        localRecords.forEach(record => {
+            if (record?.id) {
+                merged.set(record.id, record);
+            }
+        });
+
+        saveStoredRecords(Array.from(merged.values()));
+    } catch (error) {
+        console.error('Не вдалося завантажити хмарні записи:', error);
+
+        showToast('Не вдалося завантажити дані з хмари. Перевірте інтернет.');
+    }
+
+    updateRecordCountBadge();
+    renderTable();
+
+    // Синхронізуємо локальну чергу
+    await syncWithSupabase();
+}
 
 // ==========================================
 // 4. LOCAL STORAGE
@@ -151,7 +502,7 @@ function removeFromSyncQueue(operation) {
 // ==========================================
 
 async function syncWithSupabase() {
-    if (!supabaseClient || !navigator.onLine || isSyncing) {
+    if (!supabaseClient || !navigator.onLine || isSyncing || !currentUser) {
         updateSyncStatus();
         return;
     }
@@ -185,6 +536,7 @@ async function syncWithSupabase() {
                     .from('surveys')
                     .upsert({
                         id: record.id,
+                        user_id: currentUser.id,
                         answers: record,
                         updated_at: new Date().toISOString()
                     }, {
@@ -197,7 +549,8 @@ async function syncWithSupabase() {
                 result = await supabaseClient
                     .from('surveys')
                     .delete()
-                    .eq('id', operation.id);
+                    .eq('id', operation.id)
+                    .eq('user_id', currentUser.id);
             }
 
             else {
@@ -1048,7 +1401,11 @@ function showToast(msg) {
 async function registerUser(email, password) {
     const { data, error } = await supabaseClient.auth.signUp({
         email,
-        password
+        password,
+        options: {
+            emailRedirectTo: window.location.origin +
+                window.location.pathname
+        }
     });
 
     if (error) {
