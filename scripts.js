@@ -1042,3 +1042,74 @@ function showToast(msg) {
         );
     }, 3000);
 }
+
+
+// Реєстрація
+async function registerUser(email, password) {
+    const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password
+    });
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}
+
+// Вхід
+async function loginUser(email, password) {
+    const { data, error } = await supabaseClient.auth
+        .signInWithPassword({
+            email,
+            password
+        });
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}
+
+// Вихід
+async function logoutUser() {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+        throw error;
+    }
+}
+
+// Отримання поточного користувача
+async function getCurrentUser() {
+    const { data, error } = await supabaseClient.auth.getUser();
+
+    if (error) {
+        throw error;
+    }
+
+    return data.user;
+}
+
+async function downloadRecordsFromSupabase() {
+    const user = await getCurrentUser();
+
+    if (!user) {
+        throw new Error('Потрібно авторизуватися.');
+    }
+
+    const { data, error } = await supabaseClient
+        .from('surveys')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+
+    if (error) {
+        console.error('Помилка завантаження:', error);
+        throw error;
+    }
+
+    return data.map(row => row.answers);
+}
