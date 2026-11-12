@@ -18,7 +18,7 @@ let initializedUserId = null;
 let authMode = 'login';
 let appEventsInitialized = false;
 
-const SUPABASE_URL = 'https://fbnhlhzpwvogzyjiphm.supabase.co';
+const SUPABASE_URL = 'https://dfbnhlhzpwvogzyjiphm.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_iahfPQ8Ps5inAPYRaBZZsg_X7i7az98';
 
 const supabaseClient = window.supabase
