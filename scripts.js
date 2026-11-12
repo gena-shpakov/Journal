@@ -1509,8 +1509,7 @@ async function registerUser(email, password) {
         email,
         password,
         options: {
-            emailRedirectTo: window.location.origin +
-                window.location.pathname
+            emailRedirectTo: 'https://gena-shpakov.github.io/Journal/'
         }
     });
 
