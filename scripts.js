@@ -16,6 +16,7 @@ let STORAGE_KEY_SYNC = STORAGE_KEY_SYNC_BASE;
 let currentUser = null;
 let initializedUserId = null;
 let authMode = 'login';
+let passwordRecoveryMode = false;
 let appEventsInitialized = false;
 
 const SUPABASE_URL = 'https://dfbnhlhzpwvogzyjiphm.supabase.co';
@@ -86,13 +87,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Спочатку підключаємо обробник подій авторизації
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+
+        if (event === 'PASSWORD_RECOVERY') {
+            passwordRecoveryMode = true;
+
+            setTimeout(() => {
+                showPasswordRecoveryForm();
+            }, 0);
+        }
+
+        if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            initializedUserId = null;
+            passwordRecoveryMode = false;
+
+            showAuthScreen();
+            showNormalAuthForm();
+        }
+
+        if (event === 'SIGNED_IN' && session?.user) {
+            if (!passwordRecoveryMode) {
+                setTimeout(() => {
+                    initializeAuthenticatedApp(session.user);
+                }, 0);
+            }
+        }
+    });
+
     // Перевіряємо наявну сесію
     const { data, error } = await supabaseClient.auth.getSession();
 
     if (error) {
         console.error('Помилка перевірки сесії:', error);
-        showAuthMessage(error.message, 'error');
+
+        showAuthMessage(
+            getAuthErrorMessage(error),
+            'error'
+        );
+
         showAuthScreen();
+        return;
+    }
+
+    // Не відкриваємо основний застосунок,
+    // якщо користувач переходить за посиланням відновлення
+    if (passwordRecoveryMode) {
+        showPasswordRecoveryForm();
         return;
     }
 
@@ -101,22 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         showAuthScreen();
     }
-
-    // Відстежуємо вхід та вихід
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT') {
-            currentUser = null;
-            initializedUserId = null;
-            showAuthScreen();
-        }
-
-        if (event === 'SIGNED_IN' && session?.user) {
-            // Відкладаємо ініціалізацію поза callback Supabase
-            setTimeout(() => {
-                initializeAuthenticatedApp(session.user);
-            }, 0);
-        }
-    });
 });
 
 // ==========================================
@@ -217,6 +243,18 @@ function setupAuthInterface() {
     const switchButton = document.getElementById('auth-switch');
     const logoutButton = document.getElementById('logout-button');
 
+    const forgotButton = document.getElementById(
+        'forgot-password-button'
+    );
+
+    const resetForm = document.getElementById(
+        'reset-password-form'
+    );
+
+    const backButton = document.getElementById(
+        'back-to-login-button'
+    );
+
     if (form) {
         form.addEventListener('submit', handleAuthSubmit);
     }
@@ -225,8 +263,29 @@ function setupAuthInterface() {
         switchButton.addEventListener('click', event => {
             event.preventDefault();
 
-            authMode = authMode === 'login' ? 'register' : 'login';
+            authMode = authMode === 'login'
+                ? 'register'
+                : 'login';
 
+            showNormalAuthForm();
+            updateAuthMode();
+        });
+    }
+
+    if (forgotButton) {
+        forgotButton.addEventListener('click', sendPasswordResetEmail);
+    }
+
+    if (resetForm) {
+        resetForm.addEventListener('submit', handlePasswordUpdate);
+    }
+
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            passwordRecoveryMode = false;
+            authMode = 'login';
+
+            showNormalAuthForm();
             updateAuthMode();
         });
     }
@@ -240,14 +299,287 @@ function setupAuthInterface() {
                 initializedUserId = null;
 
                 showAuthScreen();
+
             } catch (error) {
                 console.error('Помилка виходу:', error);
+
                 showToast('Не вдалося вийти з облікового запису.');
             }
         });
     }
 
     updateAuthMode();
+}
+
+// ==========================================
+// PASSWORD RECOVERY
+// ==========================================
+
+// Показ звичайної форми входу / реєстрації
+function showNormalAuthForm() {
+    const authForm = document.getElementById('auth-form');
+    const resetForm = document.getElementById('reset-password-form');
+    const forgotContainer = document.getElementById(
+        'forgot-password-container'
+    );
+    const switchContainer = document.getElementById(
+        'auth-switch-container'
+    );
+
+    if (authForm) authForm.classList.remove('hidden');
+    if (resetForm) resetForm.classList.add('hidden');
+
+    if (switchContainer) {
+        switchContainer.classList.remove('hidden');
+    }
+
+    if (forgotContainer) {
+        forgotContainer.classList.toggle('hidden', authMode !== 'login');
+    }
+
+    const title = document.getElementById('auth-title');
+    const description = document.getElementById('auth-description');
+
+    if (title && authMode === 'login') {
+        title.textContent = 'Вхід до системи';
+    }
+
+    if (description && authMode === 'login') {
+        description.textContent =
+            'Увійдіть, щоб працювати зі своїми даними ЗЗСО.';
+    }
+
+    clearResetPasswordMessage();
+}
+
+// Показ форми встановлення нового пароля
+function showPasswordRecoveryForm() {
+    showAuthScreen();
+
+    const authForm = document.getElementById('auth-form');
+    const resetForm = document.getElementById('reset-password-form');
+    const forgotContainer = document.getElementById(
+        'forgot-password-container'
+    );
+    const switchContainer = document.getElementById(
+        'auth-switch-container'
+    );
+
+    if (authForm) authForm.classList.add('hidden');
+    if (resetForm) resetForm.classList.remove('hidden');
+
+    if (forgotContainer) {
+        forgotContainer.classList.add('hidden');
+    }
+
+    if (switchContainer) {
+        switchContainer.classList.add('hidden');
+    }
+
+    const title = document.getElementById('auth-title');
+    const description = document.getElementById('auth-description');
+
+    if (title) {
+        title.textContent = 'Встановлення нового пароля';
+    }
+
+    if (description) {
+        description.textContent =
+            'Введіть новий пароль для свого облікового запису.';
+    }
+
+    clearResetPasswordMessage();
+}
+
+// Повідомлення форми нового пароля
+function showResetPasswordMessage(message, type = 'error') {
+    const element = document.getElementById(
+        'reset-password-message'
+    );
+
+    if (!element) return;
+
+    element.textContent = message;
+
+    element.classList.remove(
+        'hidden',
+        'text-red-700',
+        'bg-red-50',
+        'text-green-700',
+        'bg-green-50'
+    );
+
+    if (type === 'success') {
+        element.classList.add('text-green-700', 'bg-green-50');
+    } else {
+        element.classList.add('text-red-700', 'bg-red-50');
+    }
+}
+
+function clearResetPasswordMessage() {
+    const element = document.getElementById(
+        'reset-password-message'
+    );
+
+    if (!element) return;
+
+    element.textContent = '';
+    element.classList.add('hidden');
+}
+
+// Надсилання листа для відновлення
+async function sendPasswordResetEmail() {
+    const email = document
+        .getElementById('auth-email')
+        ?.value.trim();
+
+    if (!email) {
+        showAuthMessage(
+            'Спочатку введіть свою електронну пошту.',
+            'error'
+        );
+
+        document.getElementById('auth-email')?.focus();
+        return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(email)) {
+        showAuthMessage(
+            'Введіть коректну адресу електронної пошти.',
+            'error'
+        );
+
+        return;
+    }
+
+    const button = document.getElementById(
+        'forgot-password-button'
+    );
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Надсилання...';
+    }
+
+    try {
+        const { error } = await supabaseClient.auth
+            .resetPasswordForEmail(email, {
+                redirectTo: 'https://gena-shpakov.github.io/Journal/'
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        showAuthMessage(
+            'Якщо для цієї адреси існує обліковий запис, на неї буде надіслано лист із посиланням для відновлення пароля. Перевірте також папку «Спам».',
+            'success'
+        );
+
+    } catch (error) {
+        console.error('Помилка відновлення пароля:', error);
+
+        showAuthMessage(
+            getAuthErrorMessage(error),
+            'error'
+        );
+
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Забули пароль?';
+        }
+    }
+}
+
+// Збереження нового пароля
+async function handlePasswordUpdate(event) {
+    event.preventDefault();
+
+    const password = document.getElementById(
+        'new-password'
+    )?.value;
+
+    const confirmPassword = document.getElementById(
+        'confirm-new-password'
+    )?.value;
+
+    const button = document.getElementById(
+        'reset-password-submit'
+    );
+
+    if (!password || !confirmPassword) {
+        showResetPasswordMessage(
+            'Заповніть обидва поля.'
+        );
+
+        return;
+    }
+
+    if (password.length < 6) {
+        showResetPasswordMessage(
+            'Пароль повинен містити щонайменше 6 символів.'
+        );
+
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showResetPasswordMessage(
+            'Паролі не збігаються.'
+        );
+
+        return;
+    }
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Збереження...';
+    }
+
+    try {
+        const { data, error } = await supabaseClient.auth
+            .updateUser({
+                password: password
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        passwordRecoveryMode = false;
+
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-new-password').value = '';
+
+        showToast('Пароль успішно змінено!');
+
+        if (data.user) {
+            await initializeAuthenticatedApp(data.user);
+        } else {
+            showNormalAuthForm();
+
+            showAuthMessage(
+                'Пароль успішно змінено. Тепер можете увійти.',
+                'success'
+            );
+        }
+
+    } catch (error) {
+        console.error('Помилка зміни пароля:', error);
+
+        showResetPasswordMessage(
+            getAuthErrorMessage(error)
+        );
+
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Зберегти новий пароль';
+        }
+    }
 }
 
 function getAuthErrorMessage(error) {
