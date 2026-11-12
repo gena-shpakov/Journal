@@ -14,7 +14,7 @@ let STORAGE_KEY_DRAFT = STORAGE_KEY_DRAFT_BASE;
 let STORAGE_KEY_SYNC = STORAGE_KEY_SYNC_BASE;
 
 let currentUser = null;
-let initializedUderId = null;
+let initializedUserId = null;
 let authMode = 'login';
 let appEventsInitialized = false;
 
