@@ -250,6 +250,105 @@ function setupAuthInterface() {
     updateAuthMode();
 }
 
+function getAuthErrorMessage(error) {
+    const message = (error?.message || '').toLowerCase();
+    const code = error?.code || '';
+    const status = error?.status;
+
+    // Реєстрація
+    if (
+        message.includes('user already registered') ||
+        message.includes('already been registered') ||
+        message.includes('already exists')
+    ) {
+        return 'Ця електронна адреса вже зареєстрована. Спробуйте увійти.';
+    }
+
+    if (
+        message.includes('password should be at least') ||
+        message.includes('password is too short')
+    ) {
+        return 'Пароль занадто короткий. Використайте щонайменше 6 символів.';
+    }
+
+    if (
+        message.includes('unable to validate email address') ||
+        message.includes('invalid email')
+    ) {
+        return 'Введіть коректну адресу електронної пошти.';
+    }
+
+    if (
+        message.includes('email rate limit exceeded') ||
+        message.includes('rate limit exceeded')
+    ) {
+        return 'Забагато спроб за короткий час. Спробуйте пізніше.';
+    }
+
+    if (
+        message.includes('signup is disabled')
+    ) {
+        return 'Реєстрація наразі вимкнена. Зверніться до адміністратора.';
+    }
+
+    if (
+        message.includes('email address') &&
+        message.includes('not authorized')
+    ) {
+        return 'Ця електронна адреса не дозволена для реєстрації.';
+    }
+
+    // Вхід
+    if (
+        message.includes('invalid login credentials')
+    ) {
+        return 'Неправильна електронна пошта або пароль.';
+    }
+
+    if (
+        message.includes('email not confirmed')
+    ) {
+        return 'Електронну пошту ще не підтверджено. Перевірте свою поштову скриньку.';
+    }
+
+    if (
+        message.includes('user not found')
+    ) {
+        return 'Обліковий запис не знайдено. Перевірте адресу або зареєструйтеся.';
+    }
+
+    // Мережа та сервер
+    if (
+        message.includes('failed to fetch') ||
+        message.includes('network request failed')
+    ) {
+        return 'Не вдалося з’єднатися із сервером. Перевірте підключення до інтернету.';
+    }
+
+    if (
+        message.includes('database error')
+    ) {
+        return 'Помилка бази даних під час створення облікового запису. Спробуйте пізніше.';
+    }
+
+    if (status === 429) {
+        return 'Забагато запитів. Зачекайте декілька хвилин і спробуйте знову.';
+    }
+
+    if (status >= 500) {
+        return 'Сервер тимчасово недоступний. Спробуйте пізніше.';
+    }
+
+    console.error('Невідома помилка авторизації:', {
+        message: error?.message,
+        code: error?.code,
+        status: error?.status
+    });
+
+    return 'Не вдалося виконати операцію. Спробуйте ще раз або зверніться до адміністратора.';
+}
+
+
 async function handleAuthSubmit(event) {
     event.preventDefault();
 
@@ -263,6 +362,7 @@ async function handleAuthSubmit(event) {
 
     const submitButton = document.getElementById('auth-submit');
 
+    // 1. Перевірка заповнення полів
     if (!email || !password) {
         showAuthMessage(
             'Заповніть електронну пошту та пароль.',
@@ -271,6 +371,18 @@ async function handleAuthSubmit(event) {
         return;
     }
 
+    // 2. Перевірка формату електронної пошти
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(email)) {
+        showAuthMessage(
+            'Введіть коректну адресу електронної пошти.',
+            'error'
+        );
+        return;
+    }
+
+    // 3. Перевірка довжини пароля
     if (password.length < 6) {
         showAuthMessage(
             'Пароль повинен містити щонайменше 6 символів.',
@@ -306,25 +418,19 @@ async function handleAuthSubmit(event) {
     } catch (error) {
         console.error('Помилка авторизації:', error);
 
-        let message = error.message || 'Невідома помилка.';
-
-        if (message.toLowerCase().includes('invalid login credentials')) {
-            message = 'Неправильна електронна пошта або пароль.';
-        } else if (message.toLowerCase().includes('email not confirmed')) {
-            message = 'Спочатку підтвердьте електронну пошту.';
-        } else if (message.toLowerCase().includes('user already registered')) {
-            message = 'Ця електронна пошта вже зареєстрована.';
-        }
-
-        showAuthMessage(message, 'error');
+        showAuthMessage(
+            getAuthErrorMessage(error),
+            'error'
+        );
     } finally {
         if (submitButton) {
             submitButton.disabled = false;
-            submitButton.textContent = 
+            submitButton.textContent =
                 authMode === 'login' ? 'Увійти' : 'Зареєструватися';
         }
     }
 }
+
 
 // ==========================================
 // USER-SPECIFIC STORAGE
